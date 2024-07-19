@@ -26,9 +26,13 @@ class PDFSplitterApp:
         self.upload_button = tk.Button(self.buttons_frame, text="Select PDF", command=self.select_pdf)
         self.upload_button.grid(row=0, column=0, padx=5)
 
+        # Rotation Button
+        self.rotate_button = tk.Button(self.buttons_frame, text="Rotate PDF", command=self.rotate_pdf)
+        self.rotate_button.grid(row=0, column=1, padx=5)
+
         # Split PDF Button
-        self.split_button = tk.Button(self.buttons_frame, text="Split PDF", command=self.split_pdf)
-        self.split_button.grid(row=0, column=1, padx=5)
+        self.split_button = tk.Button(self.buttons_frame, text="Split PDF", command=self.split_pdf, bg="light green")
+        self.split_button.grid(row=0, column=5, padx=5)
 
         # Prefix Entry
         self.prefix_label = tk.Label(self.buttons_frame, text="Prefix:")
@@ -39,6 +43,11 @@ class PDFSplitterApp:
         # PDF Info Label
         self.pdf_info_label = tk.Label(self.root, text="")
         self.pdf_info_label.pack(pady=5)
+
+        # Settings File Info Label
+        self.settings_info_label = tk.Label(self.root, text="")
+        self.settings_info_label.pack(pady=5)
+
 
         # Table Frame
         self.table_frame = tk.Frame(self.root)
@@ -72,6 +81,9 @@ class PDFSplitterApp:
         # Preview PDF Button
         # self.preview_button = tk.Button(self.buttons_frame, text="Preview PDF", command=self.preview_pdf)
         # self.preview_button.grid(row=0, column=4, padx=5)
+
+
+
 
         # PDF Preview Frame
         self.preview_frame = tk.Frame(self.root)
@@ -112,6 +124,34 @@ class PDFSplitterApp:
             self.pdf_info_label.config(text=f"Selected PDF: {pdf_name} ({num_pages} pages)")
             messagebox.showinfo("Selected PDF", f"Selected PDF: {self.pdf_path}")
             self.preview_pdf()
+
+    def rotate_pdf(self):
+        if not self.pdf_path:
+            messagebox.showwarning("No PDF Selected", "Please select a PDF file first.")
+            return
+
+        try:
+            pdf_reader = PdfReader(self.pdf_path)
+            pdf_writer = PdfWriter()
+            
+            for page_num in range(len(pdf_reader.pages)):
+                page = pdf_reader.pages[page_num]
+                page.rotate(90)  # Rotate each page by 90 degrees
+                pdf_writer.add_page(page)
+            
+            # Save the rotated PDF to a temporary file
+            rotated_pdf_path = "rotated_temp.pdf"
+            with open(rotated_pdf_path, "wb") as out_file:
+                pdf_writer.write(out_file)
+            
+            # Update the pdf_path to the rotated PDF
+            self.pdf_path = rotated_pdf_path
+            self.preview_pdf()  # Refresh the preview
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+
+
 
     def add_to_table(self):
         page = self.page_entry.get()
@@ -177,7 +217,10 @@ class PDFSplitterApp:
                 settings = file.read()
                 self.table_text.delete("1.0", tk.END)
                 self.table_text.insert(tk.END, settings)
+                self.settings_info_label.config(text=f"Selected Settings: {settings_path.split('/')[-1]}")
             messagebox.showinfo("Import Settings", "Settings imported successfully.")
+
+
 
     def export_settings(self):
         settings_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
